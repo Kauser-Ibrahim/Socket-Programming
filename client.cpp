@@ -128,7 +128,7 @@ void sendMessage(int clientSocket)
         cout << "\n";
 
         int recipientClientNumber;
-        cout << "Enter the client number to send a message to (0 to quit): ";
+        cout << "Enter the client number to send a message tooo (0 to quit): ";
         cin >> recipientClientNumber;
 
         if (recipientClientNumber == 0)
