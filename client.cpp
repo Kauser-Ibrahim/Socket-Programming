@@ -119,6 +119,7 @@ void sendMessage(int clientSocket)
             parts.push_back(token);
         }
         int i = 1;
+        cout << "\nConnected Clients:" << endl;
         for (const std::string &part : parts)
         {
             std::cout << i << ". " << part << endl;
@@ -128,7 +129,7 @@ void sendMessage(int clientSocket)
         cout << "\n";
 
         int recipientClientNumber;
-        cout << "Enter the client number to send a message to (0 to quit): ";
+        cout << "Enter the client number to send a message (0 to quit): ";
         cin >> recipientClientNumber;
 
         if (recipientClientNumber == 0)
@@ -204,7 +205,7 @@ int main()
     }
 
     string clientName;
-    cout << "Enter Your name: ";
+    cout << "\nEnter Your name: ";
     getline(cin, clientName);
     string encName = encrypt("hack", clientName);
     send(clientSocket, encName.c_str(), encName.size(), 0);
@@ -216,7 +217,7 @@ int main()
     while (true)
     {
         string message;
-        cout << "Enter message for server: ";
+        cout << "\nEnter message for server: ";
         getline(cin, message);
         if (message == "y" || message == "Y")
         {

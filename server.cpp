@@ -14,6 +14,7 @@
 #include <mutex>
 
 using namespace std;
+
 const int MAX_CLIENTS = 5;
 const string STOP_WORD = "123";
 vector<string> badWords = {"evil", "bad", "hate"};
@@ -127,7 +128,7 @@ void sendMessageToClient(string senderclientName, int recipientclientName, const
 {
     clientMutex.lock();
     int recipientSocket = cn[recipientclientName];
-    string fullMessage = senderclientName + "|" + message;
+    string fullMessage = senderclientName + "| " + message;
     string encMess = encrypt("hack", fullMessage);
     send(recipientSocket, encMess.c_str(), encMess.size(), 0);
     clientMutex.unlock();
@@ -146,8 +147,8 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
 
         if (containsBadWord(receivedMessage)) // BadWords Check
         {
-            cout << "Client" << clientName << " sent a message with a bad word. Message ignored." << endl;
-            string response = " YOU SEND A BAD WORD i.e : " + receivedMessage;
+            cout << "\n" << clientName << "sent a message with a bad word, Message ignored!\n";
+            string response = "YOU SENT A BAD WORD i.e : " + receivedMessage;
 
             string encMess = encrypt("hack", response);
             send(clientSocket, encMess.c_str(), encMess.size(), 0);
@@ -162,12 +163,12 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
             sendMessageToClient(clientName, recipientClientNumber, messageToForward, cname, cn);
             continue;
         }
-        else if (bytesRead > 0) // clinet CONNECTED
+        else if (bytesRead > 0) // Clinet Connected
         {
             buffer[bytesRead] = '\0';
             {
                 lock_guard<mutex> lock(cout_mutex);
-                cout << "Received from " << clientName << ": " << receivedMessage << endl;
+                cout << "\nReceived from " << clientName << ": " << receivedMessage << endl;
                 cout << flush;
 
                 string clientNameStr = clientName;
@@ -189,7 +190,7 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
         {
             {
                 lock_guard<mutex> lock(cout_mutex);
-                cout << clientName << "disconnected" << endl;
+                cout << clientName << " disconnected" << endl;
 
                 cn.erase(clientNumber);
                 cname.erase(clientNumber);
@@ -236,9 +237,9 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
 
 void sendMessage(std::map<int, string> &cname, std::map<int, int> &cn)
 {
+    cout << "Enter Y to send a message to client\n\n";
     while (true)
     {
-        cout << "Enter Y to send a message to a client\n\n";
         char select;
         cin >> select;
 
@@ -249,14 +250,14 @@ void sendMessage(std::map<int, string> &cname, std::map<int, int> &cn)
         }
         else if (select == 'Y' || 'y')
         {
+            cout << "\nConnected Clients: " << endl;
             for (const auto &entry : cname)
             {
-                cout << entry.first << "." << entry.second << endl;
+                cout << entry.first << ". " << entry.second << endl;
             }
-            cout << "Which client to send a message to: ";
+            cout << "\nEnter client number: ";
             int clientSelect;
             cin >> clientSelect;
-            cout << endl;
 
             if (clientSelect >= 1)
             {
@@ -265,6 +266,7 @@ void sendMessage(std::map<int, string> &cname, std::map<int, int> &cn)
                 cin.ignore();
                 cout << "Enter the message to send: ";
                 getline(cin, message);
+                cout << endl;
                 string encMess = encrypt("hack", message);
                 send(socket, encMess.c_str(), encMess.size(), 0);
             }
@@ -318,7 +320,7 @@ int main()
         return 1;
     }
 
-    cout << "Server listening on port 8080..." << endl;
+    cout << "\nServer listening on port 8080..." << endl;
 
     thread sendThread(sendMessage, ref(clientNames), ref(clientNumbers));
     sendThread.detach();
