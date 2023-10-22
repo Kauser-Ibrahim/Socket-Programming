@@ -1,5 +1,9 @@
+a.out
 build
+client
+server
 clientry.cpp
 clientry
 servertry.cpp
 servertry
+*.txt
