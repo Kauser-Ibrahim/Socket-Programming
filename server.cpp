@@ -18,6 +18,7 @@ using namespace std;
 const int MAX_CLIENTS = 5;
 const string STOP_WORD = "123";
 vector<string> badWords = {"evil", "bad", "hate"};
+string key;
 
 vector<int> clientSockets;
 
@@ -124,12 +125,12 @@ string decrypt(string key, string res) // CTC
     return deres;
 }
 
-void sendMessageToClient(string senderclientName, int recipientclientName, const string &message, std::map<int, string> &cname, std::map<int, int> &cn)
+void sendMessageToClient(string encKey, string senderclientName, int recipientclientName, const string &message, std::map<int, string> &cname, std::map<int, int> &cn)
 {
     clientMutex.lock();
     int recipientSocket = cn[recipientclientName];
-    string fullMessage = senderclientName + "| " + message;
-    string encMess = encrypt("hack", fullMessage);
+    string fullMessage = senderclientName + "|" + message;
+    string encMess = encrypt(key, fullMessage);
     send(recipientSocket, encMess.c_str(), encMess.size(), 0);
     clientMutex.unlock();
 }
@@ -143,24 +144,30 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
         bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
         buffer[bytesRead] = '\0';
         string encrypted(buffer);
-        string receivedMessage = decrypt("hack", encrypted);
+        string receivedMessage = decrypt(key, encrypted);
 
         if (containsBadWord(receivedMessage)) // BadWords Check
         {
-            cout << "\n" << clientName << "sent a message with a bad word, Message ignored!\n";
+            cout << "\n"
+                 << clientName << "sent a message with a bad word, Message ignored!\n";
             string response = "YOU SENT A BAD WORD i.e : " + receivedMessage;
 
-            string encMess = encrypt("hack", response);
+            string encMess = encrypt(key, response);
             send(clientSocket, encMess.c_str(), encMess.size(), 0);
             continue;
         }
-        size_t pos = receivedMessage.find('|'); // Check if client want to send to other client -- FORWARDING
+        size_t poskey = receivedMessage.find('/');
+        size_t pos = receivedMessage.find("|", poskey + 1); // Check if client want to send to other client -- FORWARDING
         if (pos != string::npos)
         {
-            string cl = receivedMessage.substr(0, pos);
+            string encKey = receivedMessage.substr(0, poskey);
+            string cl = receivedMessage.substr(poskey + 1, pos - poskey - 1);
+            // cout << receivedMessage << endl;
+            // cout << encKey << endl;
+            // cout << cl << endl;
             int recipientClientNumber = stoi(cl);
             string messageToForward = receivedMessage.substr(pos + 1);
-            sendMessageToClient(clientName, recipientClientNumber, messageToForward, cname, cn);
+            sendMessageToClient(encKey, clientName, recipientClientNumber, messageToForward, cname, cn);
             continue;
         }
         else if (bytesRead > 0) // Clinet Connected
@@ -203,7 +210,7 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
                     {
                         sockResponse += entry.second + ",";
                     }
-                    string encMess = encrypt("hack", sockResponse);
+                    string encMess = encrypt(key, sockResponse);
                     send(clientSockets[i], encMess.c_str(), encMess.size(), 0);
                 }
                 clientMutex.unlock();
@@ -267,7 +274,7 @@ void sendMessage(std::map<int, string> &cname, std::map<int, int> &cn)
                 cout << "Enter the message to send: ";
                 getline(cin, message);
                 cout << endl;
-                string encMess = encrypt("hack", message);
+                string encMess = encrypt(key, message);
                 send(socket, encMess.c_str(), encMess.size(), 0);
             }
             else
@@ -284,6 +291,9 @@ void sendMessage(std::map<int, string> &cname, std::map<int, int> &cn)
 
 int main()
 {
+    // cin.ignore();
+    cout << "Enter the key on which server will decrypt and encrypt message: ";
+    getline(cin, key);
     vector<thread> clientThreads;
     map<int, int> clientNumbers;
     map<int, string> clientNames;
@@ -347,7 +357,7 @@ int main()
         bytesRead1 = recv(clientSocket, buffer1, sizeof(buffer1), 0);
         buffer1[bytesRead1] = '\0';
         string encrypted(buffer1);
-        string clientName = decrypt("hack", encrypted);
+        string clientName = encrypted;
 
         cout << "Connection established with " << clientName << endl;
 
@@ -371,7 +381,7 @@ int main()
                 sockResponse += entry.second + ",";
             }
             sockResponse.pop_back();
-            string encMess = encrypt("hack", sockResponse);
+            string encMess = encrypt(key, sockResponse);
             send(clientSockets[i], encMess.c_str(), encMess.size(), 0);
         }
         clientMutex.unlock();

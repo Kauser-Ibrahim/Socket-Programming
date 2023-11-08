@@ -15,6 +15,8 @@ using namespace std;
 // mutex
 mutex clientMutex;
 mutex cout_mutex;
+string key;
+string messageFromClient = "";
 
 string totClientActive;
 string encrypt(string key, string text) // CTC
@@ -145,7 +147,7 @@ void sendMessage(int clientSocket)
         getline(cin, message1);
 
         string fullMessage = to_string(recipientClientNumber) + "|" + message1;
-        string encMess1 = encrypt("hack", fullMessage);
+        string encMess1 = encrypt(key, fullMessage);
         send(clientSocket, encMess1.c_str(), encMess1.size(), 0);
         break;
     }
@@ -160,7 +162,7 @@ void receiveMessages(int clientSocket)
         if (bytesRead > 0)
         {
             buffer[bytesRead] = '\0';
-            string receivedMessage(decrypt("hack", buffer));
+            string receivedMessage(decrypt(key, buffer));
             size_t pos = receivedMessage.find("cnpls");
             if (pos != string::npos)
             {
@@ -169,7 +171,7 @@ void receiveMessages(int clientSocket)
             else
             {
                 lock_guard<mutex> lock(cout_mutex);
-                string receivedMessage(decrypt("hack", buffer));
+                string receivedMessage(decrypt(key, buffer));
                 receivedMessage += "\n\nEnter message for server: ";
                 cout << "Received from server: " << receivedMessage;
                 cout << flush;
@@ -207,34 +209,52 @@ int main()
     string clientName;
     cout << "\nEnter Your name: ";
     getline(cin, clientName);
-    string encName = encrypt("hack", clientName);
+    string encName = clientName;
     send(clientSocket, encName.c_str(), encName.size(), 0);
 
+    cout << "Enter the key on which Client will decrypt and encrypt message: ";
+    getline(cin, key);
     cout << "\nConnected to server on port 8080...\nEnter the Y to send a message to Client\n";
 
     thread receiveThread(receiveMessages, clientSocket);
+    receiveThread.detach();
 
     while (true)
     {
-        string message;
-        cout << "\nEnter message for server: ";
-        getline(cin, message);
-        if (message == "y" || message == "Y")
+        if (messageFromClient.empty())
         {
-            sendMessage(clientSocket);
+            string message;
+            cout << "\nEnter message for server: ";
+            getline(cin, message);
+            if (message == "y" || message == "Y")
+            {
+                sendMessage(clientSocket);
+            }
+            else
+            {
+                string encMess = encrypt(key, message);
+                send(clientSocket, encMess.c_str(), encMess.size(), 0);
+                if (message == "quit")
+                {
+                    cout << "Client is quitting..." << endl;
+                    break;
+                }
+            }
         }
         else
         {
-            string encMess = encrypt("hack", message);
-            send(clientSocket, encMess.c_str(), encMess.size(), 0);
-            if (message == "quit")
-            {
-                cout << "Client is quitting..." << endl;
-                break;
-            }
+            lock_guard<mutex> lock(cout_mutex);
+            string clientkey;
+            cout << "Enter Key for decryption: ";
+            cin >> clientkey;
+            string clientrecieve(decrypt(clientkey, messageFromClient));
+
+            // std::this_thread::sleep_for(std::chrono::seconds(1));
+            cout << "Received from client: " << clientrecieve;
+            cout << flush;
+            messageFromClient = "";
         }
     }
-    receiveThread.join();
 
     close(clientSocket);
 
