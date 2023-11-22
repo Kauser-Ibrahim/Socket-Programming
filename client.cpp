@@ -194,7 +194,7 @@ int main()
     serverAddress.sin_port = htons(8080);
 
     // "127.0.0.1" for same pc
-    if (inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr) <= 0)
+    if (inet_pton(AF_INET, "192.168.135.10", &serverAddress.sin_addr) <= 0)
     {
         perror("Invalid IP address");
         return 1;
