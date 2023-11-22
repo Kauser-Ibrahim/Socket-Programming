@@ -13,11 +13,13 @@
 #include <map>
 #include <mutex>
 
+
 using namespace std;
 
 const int MAX_CLIENTS = 5;
 const string STOP_WORD = "123";
 vector<string> badWords = {"evil", "bad", "hate"};
+vector<string> countries = {"india"};
 string key;
 
 vector<int> clientSockets;
@@ -31,6 +33,18 @@ bool containsBadWord(const string &message)
     for (const string &badWord : badWords)
     {
         if (message.find(badWord) != string::npos)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool containsIndia(const string &message)
+{
+    for (const string &country : countries)
+    {
+        if (message.find(country) != string::npos)
         {
             return true;
         }
@@ -156,6 +170,26 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
             send(clientSocket, encMess.c_str(), encMess.size(), 0);
             continue;
         }
+
+        else if (containsIndia(receivedMessage)) // BadWords Check
+        {
+            cout << "\n"
+                 << clientName << "Received Message: " ;
+            cout << receivedMessage;
+            cout<<flush;
+            string india="india", england="england";
+
+            size_t found = receivedMessage.find("india");
+            while (found != std::string::npos) {
+            receivedMessage.replace(found, 5, "england"); // Replace "india" with "england"
+            found = receivedMessage.find("india", found + 7); // Start searching after the last replacement
+            }
+            string response = receivedMessage;
+            string encMess = encrypt(key, response);
+            send(clientSocket, encMess.c_str(), encMess.size(), 0);
+            continue;
+        }
+
         size_t poskey = receivedMessage.find('/');
         size_t pos = receivedMessage.find("|", poskey + 1); // Check if client want to send to other client -- FORWARDING
         if (pos != string::npos)
