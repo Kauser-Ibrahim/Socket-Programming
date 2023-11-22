@@ -18,7 +18,7 @@ using namespace std;
 const int MAX_CLIENTS = 5;
 const string STOP_WORD = "123";
 vector<string> badWords = {"evil", "bad", "hate"};
-vector<string> countries = {"UK", "US"};
+vector<string> countries = {"UK", "US", "England", "Austrailia", "France", "USA", "America"};
 string key;
 
 vector<int> clientSockets;
