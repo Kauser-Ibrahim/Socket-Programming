@@ -250,7 +250,7 @@ int main()
             string clientrecieve(decrypt(clientkey, messageFromClient));
 
             // std::this_thread::sleep_for(std::chrono::seconds(1));
-            cout << "Received from client as : " << clientrecieve;
+            cout << "Received from client: " << clientrecieve;
             cout << flush;
             messageFromClient = "";
         }
