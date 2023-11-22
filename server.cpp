@@ -13,13 +13,12 @@
 #include <map>
 #include <mutex>
 
-
 using namespace std;
 
 const int MAX_CLIENTS = 5;
 const string STOP_WORD = "123";
 vector<string> badWords = {"evil", "bad", "hate"};
-vector<string> countries = {"india"};
+vector<string> countries = {"UK", "US"};
 string key;
 
 vector<int> clientSockets;
@@ -40,7 +39,7 @@ bool containsBadWord(const string &message)
     return false;
 }
 
-bool containsIndia(const string &message)
+bool containsCountry(const string &message)
 {
     for (const string &country : countries)
     {
@@ -171,19 +170,22 @@ void handleClient(int clientNumber, int clientSocket, string clientName, std::ma
             continue;
         }
 
-        else if (containsIndia(receivedMessage)) // BadWords Check
+        else if (containsCountry(receivedMessage)) // BadWords Check
         {
             cout << "\n"
-                 << clientName << "Received Message: " ;
+                 << clientName << "Received Message: ";
             cout << receivedMessage;
-            cout<<flush;
-            string india="india", england="england";
-
-            size_t found = receivedMessage.find("india");
-            while (found != std::string::npos) {
-            receivedMessage.replace(found, 5, "england"); // Replace "india" with "england"
-            found = receivedMessage.find("india", found + 7); // Start searching after the last replacement
+            cout << flush;
+            for (const auto &country : countries)
+            {
+                size_t pos = receivedMessage.find(country);
+                while (pos != std::string::npos)
+                {
+                    receivedMessage.replace(pos, country.length(), "india");
+                    pos = receivedMessage.find(country, pos + 1);
+                }
             }
+            cout << flush;
             string response = receivedMessage;
             string encMess = encrypt(key, response);
             send(clientSocket, encMess.c_str(), encMess.size(), 0);
